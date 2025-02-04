@@ -16,7 +16,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local_dir: "./public_html"
           max_retries: "7"
-          ftp_ssl_allow: "true"
           ftp_nop_interval: "9"
           net_max_retries: "0"
           net_persist_retries: "11"
