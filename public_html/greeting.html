@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body style="font-family: 'Vazir', sans-serif; background-color: #f0f0f0; color: #333; text-align: center; padding: 50px;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 30px;">سلام!</h1>
+    <h2 id="greeting" style="font-size: 1.5rem; margin-bottom: 20px;"></h2>
+    <p id="today" style="font-size: 1.5rem; margin-bottom: 20px;">در حال بارگذاری...</p>
+    <p id="remaining" style="font-size: 1.2rem; color: #555;"></p>
+    <p id="clock" style="font-size: 1.5rem; margin-top: 30px;"></p>
+</body>
+<script>
+    // let today = new Date().toLocaleDateString('fa-IR');
+    // Example logic to fill in the day name and remaining days
+    const daysOfWeek = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
+    const now = new Date();
+   
+    
+    const dayName = daysOfWeek[now.getDay()];
+    const year = now.getFullYear();
+
+    // تاریخ شمسی
+    const persianDate = new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    }).format(now);
+
+    // تاریخ میلادی
+    const gregorianDate = new Intl.DateTimeFormat('en-US', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    }).format(now);
+
+    document.getElementById("today").textContent =
+        `امروز روز ${dayName} ${persianDate} معادل ${gregorianDate} می‌باشد.`;
+
+    function greeting(){
+        var currentHour = new Date().getHours();
+
+        var greeting ;
+
+        if (currentHour < 12) {
+        var greeting = "صبح";
+        } else if (currentHour < 18) {
+        var greeting = "عصر";
+        } else {
+        var greeting = "شب";
+        }
+
+        document.getElementById("greeting").textContent = `${greeting} بخیر` ;
+    }
+
+    function updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours());
+        const minutes = String(now.getMinutes());
+        const seconds = String(now.getSeconds());
+        dayPart = 
+
+        document.getElementById("clock").textContent = `ساعت: ${hours}:${minutes}:${seconds}`;
+    }
+    greeting();
+    updateClock();
+    setInterval(updateClock, 1000);
+</script>
+</html>
