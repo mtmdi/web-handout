@@ -1,0 +1,12 @@
+[
+  {
+    "id":1,
+    "title":"ASUS مدل A",
+    "price":12000000,
+    "available":true,
+    "colors":["مشکی","خاکستری"],
+    "memory":"8GB",
+    "image":"link.jpg",
+    "description":"شرح مختصر محصول."
+  }
+]
