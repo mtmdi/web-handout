@@ -1,214 +1,262 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>فروشگاه موبایل (Digikala API)</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-<style>
-  body { padding-top: 70px; }
-  .product-card { cursor: pointer; }
-</style>
+  <meta charset="UTF-8">
+  <title>فروشگاه لپ‌تاپ ایسوس</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <style>
+    body { padding-top: 70px; }
+    .product-card { cursor: pointer; }
+  </style>
 </head>
 <body>
-
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Digikala API</a>
-    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navMenu">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div id="navMenu" class="collapse navbar-collapse">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link active" href="#">خانه</a></li>
-      </ul>
-      <div class="d-flex align-items-center">
-        <span class="me-3">جمع: <strong id="cart-total">0</strong> تومان</span>
-        <button class="btn btn-outline-success" id="cart-btn">سبد خرید (<span id="cart-count">0</span>)</button>
-      </div>
-    </div>
-  </div>
-</nav>
-
-<div class="container">
-  <div class="row mb-3">
-    <div class="col-md-3">
-      <select id="filter-available" class="form-select">
-        <option value="all">همه محصولات</option>
-        <option value="available">فقط محصولات دارای قیمت</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select id="filter-color" class="form-select"><option value="all">همه رنگ‌ها</option></select>
-    </div>
-    <div class="col-md-3">
-      <select id="filter-memory" class="form-select"><option value="all">همه حافظه‌ها</option></select>
-    </div>
-    <div class="col-md-3">
-      <select id="sort-price" class="form-select">
-        <option value="none">مرتب‌سازی قیمت</option>
-        <option value="asc">↑ قیمت کم به زیاد</option>
-        <option value="desc">↓ قیمت زیاد به کم</option>
-      </select>
-    </div>
-  </div>
-  <div class="row" id="product-list"></div>
-</div>
-
-<div class="modal fade" id="detail-modal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content text-end">
-      <div class="modal-header">
-        <h5 class="modal-title" id="detail-title">جزئیات محصول</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" id="detail-body"></div>
-    </div>
-  </div>
-</div>
-
-<div class="modal fade" id="cart-modal" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content text-end">
-      <div class="modal-header">
-        <h5 class="modal-title">سبد خرید</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <ul id="cart-items" class="list-group mb-3"></ul>
-        <div class="text-end">جمع کل: <strong id="cart-total-modal">0</strong> تومان</div>
-      </div>
-      <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">بستن</button></div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-let products = [];
-let cart = JSON.parse(localStorage.getItem('cart')||'[]');
-
-async function loadProducts(){
-  const res = await fetch('https://api.digikala.com/v1/categories/mobile-phone/search/?page=1');
-  const data = await res.json();
-  products = data.data.products.map(p => ({
-    id: p.id,
-    title: p.title_fa || p.title,
-    price: p.default_variant?.price?.selling_price || 0,
-    available: p.default_variant?.price?.selling_price > 0,
-    colors: p.colors || [],
-    memory: p.default_variant?.features?.memory || 'نامشخص',
-    image: p.images && p.images[0]?.src || '',
-    description: p.short_description || ''
-  }));
-  populateFilterOptions();
-  renderProducts();
-  renderCartSummary();
-}
-
-function populateFilterOptions(){
-  const colors = new Set(), memories = new Set();
-  products.forEach(p => { p.colors.forEach(c=>colors.add(c)); memories.add(p.memory); });
-  const fc = document.getElementById('filter-color');
-  colors.forEach(c=> fc.append(new Option(c, c)));
-  const fm = document.getElementById('filter-memory');
-  memories.forEach(m=> fm.append(new Option(m, m)));
-}
-
-function renderProducts(){
-  let list = products.slice();
-  const fa=document.getElementById('filter-available').value;
-  const fc=document.getElementById('filter-color').value;
-  const fm=document.getElementById('filter-memory').value;
-  const sv=document.getElementById('sort-price').value;
-  if(fa==='available') list=list.filter(p=>p.available);
-  if(fc!=='all') list=list.filter(p=>p.colors.includes(fc));
-  if(fm!=='all') list=list.filter(p=>p.memory===fm);
-  if(sv==='asc') list.sort((a,b)=>a.price-b.price);
-  if(sv==='desc') list.sort((a,b)=>b.price-a.price);
-
-  const container = document.getElementById('product-list');
-  container.innerHTML='';
-  list.forEach(p=>{
-    const col=document.createElement('div'); col.className='col-md-4 mb-3';
-    col.innerHTML = `
-      <div class="card product-card" data-id="${p.id}">
-        <img src="${p.image}" class="card-img-top" alt="${p.title}">
-        <div class="card-body text-end">
-          <h5 class="card-title">${p.title}</h5>
-          <p class="card-text">قیمت: ${p.price.toLocaleString()} تومان</p>
-          <p class="card-text">${p.available?'موجود':'ناموجود'}</p>
-          <button class="btn btn-primary details-btn">جزئیات</button>
-          <button class="btn btn-success add-btn" ${p.available? '' : 'disabled'}>افزودن</button>
+  <!-- منوی بالا -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">لوگوی من</a>
+      <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="navMenu" class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link active" href="#">خانه</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">درباره ما</a></li>
+        </ul>
+        <div class="d-flex align-items-center">
+          <span class="me-3">جمع: <strong id="cart-total">0</strong> تومان</span>
+          <button class="btn btn-outline-success" id="cart-btn">سبد خرید (<span id="cart-count">0</span>)</button>
         </div>
-      </div>`;
-    container.append(col);
-  });
-  attachHandlers();
-}
+      </div>
+    </div>
+  </nav>
 
-function attachHandlers(){
-  document.querySelectorAll('.add-btn').forEach(btn=>{
-    btn.onclick=e=>{
-      addToCart(e.target.closest('.product-card').dataset.id);
-    };
-  });
-  document.querySelectorAll('.details-btn').forEach(btn=>{
-    btn.onclick=e=>{
-      showDetails(e.target.closest('.product-card').dataset.id);
-    };
-  });
-}
+  <div class="container">
+    <!-- فیلتر و مرتب‌سازی -->
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <select id="filter-available" class="form-select">
+          <option value="all">همه محصولات</option>
+          <option value="available">فقط موجود</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select id="filter-color" class="form-select">
+          <option value="all">همه رنگ‌ها</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select id="filter-memory" class="form-select">
+          <option value="all">همه حافظه‌ها</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select id="sort-price" class="form-select">
+          <option value="none">مرتب‌سازی قیمت</option>
+          <option value="asc">قیمت ↑</option>
+          <option value="desc">قیمت ↓</option>
+        </select>
+      </div>
+    </div>
 
-function addToCart(id){
-  const p=products.find(x=>x.id==id);
-  cart.push(p);
-  localStorage.setItem('cart', JSON.stringify(cart));
-  renderCartSummary();
-}
+    <!-- لیست محصولات -->
+    <div class="row" id="product-list"></div>
+  </div>
 
-function renderCartSummary(){
-  document.getElementById('cart-count').textContent = cart.length;
-  const total = cart.reduce((s,p)=>s+p.price,0);
-  document.getElementById('cart-total').textContent = total.toLocaleString();
-}
+  <!-- مودال جزئیات محصول -->
+  <div class="modal fade" id="detail-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content text-end">
+        <div class="modal-header">
+          <h5 class="modal-title" id="detail-title">جزئیات محصول</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="detail-body"></div>
+      </div>
+    </div>
+  </div>
 
-document.getElementById('cart-btn').addEventListener('click', ()=>{
-  const ul=document.getElementById('cart-items');
-  ul.innerHTML='';
-  cart.forEach((p,i)=>{
-    const li=document.createElement('li');
-    li.className='list-group-item d-flex justify-content-between align-items-center';
-    li.innerHTML = `<span>${p.title} – ${p.price.toLocaleString()} تومان</span>
-      <button class="btn btn-danger btn-sm remove-btn">×</button>`;
-    li.querySelector('.remove-btn').onclick = ()=>{
-      cart.splice(i,1);
-      localStorage.setItem('cart', JSON.stringify(cart));
+  <!-- مودال سبد خرید -->
+  <div class="modal fade" id="cart-modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content text-end">
+        <div class="modal-header">
+          <h5 class="modal-title">سبد خرید</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <ul id="cart-items" class="list-group mb-3"></ul>
+          <div class="text-end">جمع کل: <strong id="cart-total-modal">0</strong> تومان</div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // JSON استاتیک داخل اسکریپت:
+    const products = [
+      {
+        "id":1,
+        "title":"ASUS مدل A",
+        "price":12000000,
+        "available":true,
+        "colors":["مشکی","خاکستری"],
+        "memory":"8GB",
+        "image":"link.jpg",
+        "description":"شرح مختصر محصول."
+      },
+      {
+        "id":2,
+        "title":"ASUS مدل B",
+        "price":15000000,
+        "available":false,
+        "colors":["نقره‌ای","آبی"],
+        "memory":"16GB",
+        "image":"link2.jpg",
+        "description":"مدل B با ویژگی‌های پیشرفته."
+      },
+      {
+        "id":3,
+        "title":"ASUS مدل C",
+        "price":10000000,
+        "available":true,
+        "colors":["مشکی","نقره‌ای"],
+        "memory":"8GB",
+        "image":"link3.jpg",
+        "description":"مدل C اقتصادی."
+      }
+    ];
+
+    let cart = JSON.parse(localStorage.getItem('cart')||'[]');
+
+    function populateFilterOptions(){
+      const colors = new Set();
+      const memories = new Set();
+      products.forEach(p=>{
+        p.colors.forEach(c=>colors.add(c));
+        memories.add(p.memory);
+      });
+      const fc = document.getElementById('filter-color');
+      colors.forEach(c=> fc.append(new Option(c, c)));
+      const fm = document.getElementById('filter-memory');
+      memories.forEach(m=> fm.append(new Option(m, m)));
+    }
+
+    function renderProducts(){
+      const filterColor = document.getElementById('filter-color').value;
+      const filterMemory = document.getElementById('filter-memory').value;
+      const filterAvailable = document.getElementById('filter-available').value;
+      let list = products.slice();
+      if(filterAvailable==='available') list=list.filter(p=>p.available);
+      if(filterColor!=='all') list=list.filter(p=>p.colors.includes(filterColor));
+      if(filterMemory!=='all') list=list.filter(p=>p.memory===filterMemory);
+      const sortVal = document.getElementById('sort-price').value;
+      if(sortVal==='asc') list.sort((a,b)=>a.price-b.price);
+      if(sortVal==='desc') list.sort((a,b)=>b.price-a.price);
+
+      const container = document.getElementById('product-list');
+      container.innerHTML = '';
+      list.forEach(p=>{
+        const col = document.createElement('div');
+        col.className = 'col-md-4 mb-3';
+        col.innerHTML = `
+          <div class="card product-card" data-id="${p.id}">
+            <img src="${p.image}" class="card-img-top" alt="${p.title}">
+            <div class="card-body text-end">
+              <h5 class="card-title">${p.title}</h5>
+              <p class="card-text">قیمت: ${p.price.toLocaleString()} تومان</p>
+              <p class="card-text">${p.available?'موجود':'اتمام'}</p>
+              <button class="btn btn-primary details-btn">جزئیات</button>
+              <button class="btn btn-success add-btn">افزودن به سبد</button>
+            </div>
+          </div>`;
+        container.append(col);
+      });
+      attachHandlers();
+    }
+
+    function attachHandlers(){
+      document.querySelectorAll('.add-btn').forEach(btn=>{
+        btn.onclick = e=>{
+          const id = e.target.closest('.product-card').dataset.id;
+          addToCart(id);
+        }
+      });
+      document.querySelectorAll('.details-btn').forEach(btn=>{
+        btn.onclick = e=>{
+          const id = e.target.closest('.product-card').dataset.id;
+          showDetails(id);
+        }
+      });
+    }
+
+    function addToCart(id){
+      const p = products.find(x=>x.id==id);
+      cart.push(p);
+      saveCart();
       renderCartSummary();
-      li.remove();
-    };
-    ul.append(li);
-  });
-  document.getElementById('cart-total-modal').textContent = cart.reduce((s,p)=>s+p.price,0).toLocaleString();
-  new bootstrap.Modal(document.getElementById('cart-modal')).show();
-});
+    }
 
-function showDetails(id){
-  const p=products.find(x=>x.id==id);
-  document.getElementById('detail-title').textContent = p.title;
-  document.getElementById('detail-body').innerHTML = `
-    <img src="${p.image}" class="img-fluid mb-3" alt="${p.title}">
-    <p>${p.description}</p>
-    <p><strong>رنگ‌ها:</strong> ${p.colors.join(', ')}</p>
-    <p><strong>حافظه:</strong> ${p.memory}</p>
-    <p><strong>قیمت:</strong> ${p.price.toLocaleString()} تومان</p>`;
-  new bootstrap.Modal(document.getElementById('detail-modal')).show();
-}
+    function saveCart(){
+      localStorage.setItem('cart', JSON.stringify(cart));
+    }
 
-['filter-available','filter-color','filter-memory','sort-price'].forEach(id=>{
-  document.getElementById(id).addEventListener('change', renderProducts);
-});
+    function renderCartSummary(){
+      document.getElementById('cart-count').textContent = cart.length;
+      const total = cart.reduce((sum,p)=>sum+p.price, 0);
+      document.getElementById('cart-total').textContent = total.toLocaleString();
+    }
 
-document.addEventListener('DOMContentLoaded', loadProducts);
-</script>
+    document.getElementById('cart-btn').addEventListener('click', ()=>{
+      const ul = document.getElementById('cart-items');
+      ul.innerHTML = '';
+      cart.forEach((p,i)=>{
+        const li = document.createElement('li');
+        li.className = 'list-group-item d-flex justify-content-between align-items-center';
+        li.innerHTML = `
+          <span>${p.title} – ${p.price.toLocaleString()} تومان</span>
+          <button class="btn btn-danger btn-sm remove-btn">×</button>
+        `;
+        const btn = li.querySelector('.remove-btn');
+        btn.onclick = ()=>{
+          cart.splice(i,1);
+          saveCart();
+          renderCartSummary();
+          btn.closest('li').remove();
+        };
+        ul.append(li);
+      });
+      document.getElementById('cart-total-modal').textContent = cart.reduce((sum,p)=>sum+p.price,0).toLocaleString();
+      new bootstrap.Modal(document.getElementById('cart-modal')).show();
+    });
+
+    function showDetails(id){
+      const p = products.find(x=>x.id==id);
+      document.getElementById('detail-title').textContent = p.title;
+      document.getElementById('detail-body').innerHTML = `
+        <img src="${p.image}" class="img-fluid mb-3" alt="${p.title}">
+        <p>${p.description}</p>
+        <p><strong>رنگ‌ها:</strong> ${p.colors.join(', ')}</p>
+        <p><strong>حافظه:</strong> ${p.memory}</p>
+        <p><strong>قیمت:</strong> ${p.price.toLocaleString()} تومان</p>
+      `;
+      new bootstrap.Modal(document.getElementById('detail-modal')).show();
+    }
+
+    document.getElementById('filter-available').onchange =
+    document.getElementById('filter-color').onchange =
+    document.getElementById('filter-memory').onchange =
+    document.getElementById('sort-price').onchange = renderProducts;
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      populateFilterOptions();
+      renderProducts();
+      renderCartSummary();
+    });
+  </script>
 </body>
 </html>
