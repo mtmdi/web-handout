@@ -132,7 +132,7 @@ function renderProducts(){
     const col=document.createElement('div'); col.className='col-md-4 mb-3';
     col.innerHTML = `
       <div class="card product-card" data-id="${p.id}">
-        <img src="${p.images}" class="card-img-top" alt="${p.title}">
+        <img src="${p.images?.main?.url || 'fallback.jpg'}" class="card-img-top" alt="${p.title}">
         <div class="card-body text-end">
           <h5 class="card-title">${p.title}</h5>
           <p class="card-text">قیمت: ${p.price.toLocaleString()} تومان</p>
