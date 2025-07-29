@@ -97,7 +97,7 @@ async function loadProducts(){
     available: p.default_variant?.price?.selling_price > 0,
     colors: p.colors || [],
     memory: p.default_variant?.features?.memory || 'نامشخص',
-    image: p.images && pp.images?.main?.url[0] || '',
+    image: p.images && p.images?.main?.url[0] || '',
     description: p.short_description || ''
   }));
   populateFilterOptions();
