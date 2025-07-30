@@ -93,8 +93,8 @@ async function loadProducts(){
   products = data.data.products.map(p => ({
     id: p.id,
     title: p.title_fa || p.title,
-    selling_price: p.default_variant?.price|| 0,
-    rrp_price: p.default_variant?.price || 0,
+    price: p.default_variant?.price?.selling_price || 0,
+    price: p.default_variant?.price?.selling_price || 0,
     available: p.default_variant?.price?.selling_price > 0,
     colors: p.colors || [],
     memory: p.default_variant?.features?.memory || 'نامشخص',
@@ -136,7 +136,7 @@ function renderProducts(){
         <img src="${p.image}" class="card-img-top" alt="${p.title}">
         <div class="card-body text-end">
           <h5 class="card-title">${p.title}</h5>
-          <p class="card-text">قیمت: ${p.selling_price.toLocaleString()} تومان</p>
+          <p class="card-text">قیمت: ${p.price.toLocaleString()} تومان</p>
           <p class="card-text">${p.available?'موجود':'ناموجود'}</p>
           <button class="btn btn-primary details-btn">جزئیات</button>
           <button class="btn btn-success add-btn" ${p.available? '' : 'disabled'}>افزودن</button>
