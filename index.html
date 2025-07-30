@@ -93,8 +93,8 @@ async function loadProducts(){
   products = data.data.products.map(p => ({
     id: p.id,
     title: p.title_fa || p.title,
-    selling_price: p.default_variant?.price?.selling_price / 10|| 0,
-    rrp_price: p.default_variant?.price?.rrp_price /10 || 0,
+    selling_price: p.default_variant?.price|| 0,
+    rrp_price: p.default_variant?.price || 0,
     available: p.default_variant?.price?.selling_price > 0,
     colors: p.colors || [],
     memory: p.default_variant?.features?.memory || 'نامشخص',
